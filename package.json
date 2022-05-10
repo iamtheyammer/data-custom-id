@@ -1,6 +1,6 @@
 {
   "name": "data-custom-id",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Hold data in Discord's Interaction Custom IDs.",
   "main": "out/DataCustomId.js",
   "repository": "https://github.com/iamtheyammer/data-custom-id",

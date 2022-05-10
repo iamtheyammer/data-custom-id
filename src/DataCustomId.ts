@@ -1,6 +1,7 @@
 import { parse, stringify } from "qs";
-type DataCustomIdFieldValue = string | string[] | boolean;
+type DataCustomIdFieldValue = string | string[];
 type EncodableDataCustomIdFieldValue =
+  | boolean
   | number
   | number[]
   | null
@@ -104,7 +105,7 @@ export default class DataCustomId {
    *
    * @param id {string} The raw custom ID with or without fields appended.
    */
-  constructor(id: string) {
+  constructor(id: string = "") {
     if (id.includes("?")) {
       this.rawId = id.slice(0, id.indexOf("?"));
       this.fields = parse(id.slice(id.indexOf("?") + 1), {
@@ -345,3 +346,7 @@ export default class DataCustomId {
     return finalId;
   }
 }
+
+module.exports = DataCustomId;
+module.exports.DataCustomIdLengthError = DataCustomIdLengthError;
+module.exports.defaultEncodeOptions = defaultEncodeOptions;

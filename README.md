@@ -2,37 +2,49 @@
 
 [![npm version](https://badge.fury.io/js/data-custom-id.svg)](https://badge.fury.io/js/data-custom-id)
 
-Holds data in Discord's Interaction Custom IDs.
+DataCustomId lets you store data inside Discord's Custom ID system. 
+This is useful for storing state within multi-interaction flows (confirm buttons, flows, etc.).
 
-Have you ever wanted to store state between Discord interactions (perhaps for a confirm button)?
-Here's a simple way to do it with full TypeScript support and rigorous testing.
+Data is stored using a system similar to URL query strings appended to the provided custom ID.
 
-| Command        | State | DataCustomId                          |
-|----------------| --- |---------------------------------------|
-| `/ban/confirm` | `{ "user": "42390489028347289"} ` | `/ban/confirm?user=42390489028347289` |
+It's important to note that you can not guarantee data integrity. 
+Custom IDs are sent by the client, and can be modified by users. 
+**DO NOT INCLUDE SENSITIVE DATA IN CUSTOM IDS!.**
 
-## Installation and Usage
+Once instances are created, the raw Custom ID (customId.rawId) is immutable.
+If you want to keep the current state and change the raw ID, you can create a new instance with the new raw ID, 
+then call `newCustomId.copyFieldsFrom(oldCustomId)`.
+
+|   Custom ID   |               State                | DataCustomId (that you'll send to Discord) |
+|:-------------:|:----------------------------------:|:------------------------------------------:|
+| `ban/confirm` | `{ "user": "42390489028347289" } ` |    `ban/confirm?user=42390489028347289`    |
+
+## Quickstart
+
+See full documentation [here](docs/API.md).
+
+### Install
 
 `npm install data-custom-id` / `yarn add data-custom-id`
+
+For TypeScript users, types are included in the package.
 
 ### Import
 
 ```js
-// if using node modules, typescript, or a bundler
+// if using node with modules, typescript, or a bundler
 import DataCustomId from 'data-custom-id';
 // otherwise,
-const DataCustomId = require("data-custom-id").default;
+const DataCustomId = require("data-custom-id");
 ```
 
 ### Send a DataCustomId
 
 ```js
 // create a new DataCustomId
-const dataCustomIdString = new DataCustomId("myRawId")
+const dataCustomId = new DataCustomId("ban/confirm")
   // add fields (chainable)
   .addField("user", "42390489028347289")
-  // stringify
-  .toString()
 
 await interaction.reply({
   content: "Are you sure you want to ban this user?",
@@ -40,43 +52,60 @@ await interaction.reply({
     new MessageActionRow().addComponents(
       new MessageButton()
         .setLabel("Confirm")
-        .setCustomId(dataCustomIdString)
+        .setCustomId(dataCustomId.toString())
         .setStyle("DANGER")
     )
   ]
 })
 ```
 
-### Handle a DataCustomId
+### Receive a DataCustomId
 
 This example uses "path parts", which is your raw ID split by `/`.
 
 ```js
+// assuming you're using discord.js, but you don't have to
 client.on("interactionCreate", (interaction) => {
   // only message components have custom IDs
-  if(interaction.isMessageComponent()) {
-    // using the example from before, let's say the custom id is:
-    // /ban/confirm?user=42390489028347289
-    const dataCustomId = new DataCustomId(interaction.customId);
-    
-    // splits the rawId by /
-    // if you need, you can also use dataCustomId.rawId
-    switch(dataCustomId.pathParts[0]) {
-      case "ban": {
-        switch (dataCustomId.pathParts[1]) {
-          case "confirm": {
-            const userId = dataCustomId.getStringField("user");
-            // ban the user
-            break;
-          };
-          // ... (more cases for /ban/*)
-        }
-        break;
+  if(!interaction.isMessageComponent()) {
+    return;
+  }
+
+  // new DataCustomId(id) parses fields from the string id if present
+  // using the example from before, let's say the custom id is:
+  // ban/confirm?user=42390489028347289
+  const dataCustomId = new DataCustomId(interaction.customId);
+
+  // pathParts splits the rawId by /
+  // if you need, you can also use dataCustomId.rawId, which is the custom id without any data
+  switch(dataCustomId.pathParts[0]) {
+    case "ban": {
+      // the `|| ""` is in case the id is just `ban`
+      switch (dataCustomId.pathParts[1] || "") {
+        case "confirm": {
+          const userId = dataCustomId.getStringField("user"); // 42390489028347289
+          // ban the user
+          break;
+        };
+        // ... (more cases for ban/*)
       }
-      // ... (more cases for /*)
+      break;
     }
+    // ... (more cases for *)
   }
 })
+```
+
+### Copy fields between DataCustomIds
+
+```js
+// new DataCustomId(id) parses the id and handles fields
+const customId = new DataCustomId(interaction.customId)
+// customId.getFields() -> { "user": "42390489028347289", "reason": "spam" }
+
+const newCustomId = new DataCustomId("...")
+  .copyFieldsFrom(customId)
+// newCustomId.getFields() -> { "user": "42390489028347289", "reason": "spam" }
 ```
 
 ## Tell me more
@@ -100,5 +129,4 @@ the convenience methods handle types, so `"1"` is converted to `1`, for example.
 
 ## Full documentation
 
-Full documentation is coming, but, for now, check out the JSDoc comments
-on the code [here](https://github.com/iamtheyammer/data-custom-id/blob/main/src/DataCustomId.ts).
+See full docs [here](docs/API.md).
