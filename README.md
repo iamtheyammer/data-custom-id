@@ -97,3 +97,8 @@ You can use convenience methods like:
 
 Or, you can use `getFields` to get all fields, however
 the convenience methods handle types, so `"1"` is converted to `1`, for example.
+
+## Full documentation
+
+Full documentation is coming, but, for now, check out the JSDoc comments
+on the code [here](https://github.com/iamtheyammer/data-custom-id/blob/main/src/DataCustomId.ts).
